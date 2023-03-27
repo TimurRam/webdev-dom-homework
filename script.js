@@ -4,22 +4,17 @@ const commentsElement = document.getElementById("comments-input");
 const listElement = document.getElementById("list");
 const commentListElement = document.getElementById("comment-list");
 const mainForm = document.querySelector(".add-form");
-// Опции для преобразования формата времени
-const options = {
-  year: '2-digit',
-  month: 'numeric',
-  day: 'numeric',
-  timezone: 'UTC',
-  hour: 'numeric',
-  minute: '2-digit'
-};
-let myDate = new Date().toLocaleDateString("ru-RU", options).replace(',', ' ');
+const loaderText = document.getElementById("loaderText");
+const loaderCommentsElement = document.getElementById("loaderComments");
+
+
 // GET запрос 
- fetch("https://webdev-hw-api.vercel.app/api/v1/timur-ramazanov/comments", {
-  method: "GET"
-}).then((response) => {
-  const jsonPromise = response.json();
-  jsonPromise.then((responseData) => {
+const fetchGetAndRenderComments = () => {
+  return fetch("https://webdev-hw-api.vercel.app/api/v1/timur-ramazanov/comments", {
+    method: "GET"
+  }).then((response) => {
+    return response.json();
+  }).then((responseData) => {
     const options = {
       year: '2-digit',
       month: 'numeric',
@@ -38,11 +33,10 @@ let myDate = new Date().toLocaleDateString("ru-RU", options).replace(',', ' ');
       };
     });
     comments = appComments;
+    loaderCommentsElement.classList.add('-display-none')
     renderComments();
   });
-});
-
-
+}
 let comments = [];
 
 
@@ -73,6 +67,7 @@ const ButtonTouch = () => {
   for (const likeButton of likeButtons) {
     likeButton.addEventListener("click", () => {
       const index = likeButton.dataset.index;
+
       if (comments[index].liked === false) {
         comments[index].liked = true;
         comments[index].likeCount += 1;
@@ -81,9 +76,19 @@ const ButtonTouch = () => {
         comments[index].liked = false;
         comments[index].likeCount -= 1;
       }
-      renderComments();
+      delay(2000).then(() => {
+        renderComments();
+
+      })
     })
   };
+}
+function delay(interval = 300) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, interval);
+  });
 }
 // Цитирует выбранный комментарий
 const initTouchComment = () => {
@@ -107,39 +112,57 @@ const buttonDelete = () => {
 };
 buttonDelete();
 
+const addComments = () => {
+  buttonElement.addEventListener("click", () => {
 
-const repeatedGet = () => {
-  fetch("https://webdev-hw-api.vercel.app/api/v1/timur-ramazanov/comments", {
-    method: "GET"
-  }).then((response) => {
-    const jsonPromise = response.json();
-    jsonPromise.then((responseData) => {
-        
-const options = {
-          year: '2-digit',
-          month: 'numeric',
-          day: 'numeric',
-          timezone: 'UTC',
-          hour: 'numeric',
-          minute: '2-digit'
-        };
-      const appComments = responseData.comments.map((comment) => {
-        return {
-          name: comment.author.name,
-          date: new Date(comment.date).toLocaleDateString("ru-RU", options).replace(',', ' '),
-          text: comment.text,
-          likeCount: comment.likes,
-          liked: false,
-        };
-      });
-      comments = appComments;
-      console.log(comments);
+    nameElement.classList.remove("error");
+    commentsElement.classList.remove("error");
+
+    nameElement.classList.remove("error");
+    commentsElement.classList.remove("error");
+
+    if (nameElement.value === '') {
+      nameElement.classList.add("error");
+      return
+
+    } else if (commentsElement.value === '') {
+      commentsElement.classList.add("error");
+      return
+    }
+    mainForm.classList.add('-display-none');
+    loaderCommentsElement.classList.remove('-display-none');
+
+    // Передаем комментарий
+    fetch("https://webdev-hw-api.vercel.app/api/v1/timur-ramazanov/comments", {
+      method: "POST",
+      body: JSON.stringify({
+        name: nameElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+        date: new Date,
+        text: commentsElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+        likeCount: 0,
+        liked: false,
+      })
+    }).then((response) => {
+      return response.json();
+    }).then((responseData) => {
+      comments = responseData;
+    }).then(() => {
+      return fetchGetAndRenderComments();
+
+    }).then((data) => {
+      mainForm.classList.remove('-display-none');
+      loaderCommentsElement.classList.add('-display-none');
+
+      nameElement.value = '';
+      commentsElement.value = '';
       renderComments();
-    });
+    })
   });
-  renderComments();
-};
+}
 
+
+
+// Пока не разобрался... 
 // const editButtonTouch = () =>{
 
 //   const editButtons = document.querySelectorAll(".edit-button");
@@ -157,6 +180,7 @@ const options = {
 
 //   }
 // };
+
 
 
 const renderComments = () => {
@@ -177,7 +201,7 @@ const renderComments = () => {
       <div class="likes">
       <button class = "edit-button" data-index ="${index}">Редактировать</button>
         <span class="likes-counter">${comment.likeCount}</span>
-        <button data-index="${index}" class="${comment.liked ? 'like-button -active-like' : 'like-button'}"></button>
+        <button data-index="${index}" class="${comment.liked ? 'like-button -loading-like -active-like' : 'like-button'}"></button>
         
       </div>
     </div>
@@ -187,55 +211,17 @@ const renderComments = () => {
   listElement.innerHTML = commentsHtml
   ButtonTouch();
   initTouchComment();
-
+  buttonBlock();
 };
-renderComments();
-const addComment = () =>{
-buttonElement.addEventListener("click", () => {
-  nameElement.classList.remove("error");
-  commentsElement.classList.remove("error");
-
-  if (nameElement.value === '') {
-    nameElement.classList.add("error");
-    return
-
-  } else if (commentsElement.value === '') {
-    commentsElement.classList.add("error");
-    return;
-  }
-  // Передаем комментарий
-  fetch("https://webdev-hw-api.vercel.app/api/v1/timur-ramazanov/comments", {
-    method: "POST",
-    body: JSON.stringify({
-      name: nameElement.value,
-      date: myDate,
-      text: commentsElement.value,
-      likeCount: 0,
-      liked: false,
-    })
-  }).then((response) => {
-    const jsonPromise = response.json();
-    jsonPromise.then((responseData) => {
-      comments = responseData;
-    });
-    nameElement.value = '';
-    commentsElement.value = '';
-    repeatedGet();
-
-  });
-
-});
-};
-addComment();
+addComments();
+fetchGetAndRenderComments();
 renderComments();
 
-validateBlock();
-buttonBlock();
 mainForm.addEventListener("keyup", (e) => {
-  if (e.code === 'Enter') {
+  if (e.code === 'Enter' || e.code === 'NumpadEnter') {
     buttonElement.click();
     nameElement.value = '';
     commentsElement.value = '';
   }
 });
-renderComments();
+
