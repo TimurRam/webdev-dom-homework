@@ -3,23 +3,9 @@ const nameElement = document.getElementById("name-input");
 const commentsElement = document.getElementById("comments-input");
 const listElement = document.getElementById("list");
 const commentListElement = document.getElementById("comment-list");
-
-const comments = [
-  {
-    name: 'Глеб Фокин',
-    date: '12.02.22 12:18',
-    text: 'Это будет первый комментарий на этой странице',
-    likeCount: 3,
-    liked: false,
-  },
-  {
-    name: 'Варвара Н.',
-    date: '13.02.22 19:22',
-    text: 'Мне нравится как оформлена эта страница! ❤',
-    likeCount: 75,
-    liked: true,
-  }
-]; const options = {
+const mainForm = document.querySelector(".add-form");
+// Опции для преобразования формата времени
+const options = {
   year: '2-digit',
   month: 'numeric',
   day: 'numeric',
@@ -28,7 +14,60 @@ const comments = [
   minute: '2-digit'
 };
 let myDate = new Date().toLocaleDateString("ru-RU", options).replace(',', ' ');
+// GET запрос 
+ fetch("https://webdev-hw-api.vercel.app/api/v1/timur-ramazanov/comments", {
+  method: "GET"
+}).then((response) => {
+  const jsonPromise = response.json();
+  jsonPromise.then((responseData) => {
+    const options = {
+      year: '2-digit',
+      month: 'numeric',
+      day: 'numeric',
+      timezone: 'UTC',
+      hour: 'numeric',
+      minute: '2-digit'
+    };
+    const appComments = responseData.comments.map((comment) => {
+      return {
+        name: comment.author.name,
+        date: new Date(comment.date).toLocaleDateString("ru-RU", options).replace(',', ' '),
+        text: comment.text,
+        likeCount: comment.likes,
+        liked: false,
+      };
+    });
+    comments = appComments;
+    renderComments();
+  });
+});
 
+
+let comments = [];
+
+
+// Выключение кнопки написать
+
+const validateBlock = () => {
+  if (nameElement.value === '' || commentsElement.value === '') {
+    buttonElement.disabled = true;
+  } else {
+    buttonElement.disabled = false;
+  }
+}
+const buttonBlock = () => {
+  validateBlock();
+  document.querySelectorAll("#name-input,#comments-input").forEach(element => {
+    element.addEventListener('input', () => {
+      if (nameElement.value === '' || commentsElement.value === '') {
+        buttonElement.disabled = true;
+      } else {
+        buttonElement.disabled = false;
+      }
+    });
+  });
+}
+// Кнопка лайка
 const ButtonTouch = () => {
   const likeButtons = document.querySelectorAll(".like-button");
   for (const likeButton of likeButtons) {
@@ -42,22 +81,82 @@ const ButtonTouch = () => {
         comments[index].liked = false;
         comments[index].likeCount -= 1;
       }
-      console.log(likeButton);
       renderComments();
     })
   };
 }
+// Цитирует выбранный комментарий
 const initTouchComment = () => {
   const touchComments = listElement.querySelectorAll(".comment-text");
   for (const comment of touchComments) {
     comment.addEventListener("click", () => {
       const index = comment.dataset.index;
-      commentsElement.value = `>${comments[index].text}\n${comments[index].name},`
+      commentsElement.value = `>${comments[index].text}<\n>${comments[index].name}<,\n`
       renderComments();
     });
   }
 }
 
+// Удаление последнего комментария
+const buttonDelete = () => {
+  const buttonDeleteElement = document.getElementById("add-button-delete");
+  buttonDeleteElement.addEventListener('click', () => {
+    comments.pop();
+    renderComments();
+  });
+};
+buttonDelete();
+
+
+const repeatedGet = () => {
+  fetch("https://webdev-hw-api.vercel.app/api/v1/timur-ramazanov/comments", {
+    method: "GET"
+  }).then((response) => {
+    const jsonPromise = response.json();
+    jsonPromise.then((responseData) => {
+        
+const options = {
+          year: '2-digit',
+          month: 'numeric',
+          day: 'numeric',
+          timezone: 'UTC',
+          hour: 'numeric',
+          minute: '2-digit'
+        };
+      const appComments = responseData.comments.map((comment) => {
+        return {
+          name: comment.author.name,
+          date: new Date(comment.date).toLocaleDateString("ru-RU", options).replace(',', ' '),
+          text: comment.text,
+          likeCount: comment.likes,
+          liked: false,
+        };
+      });
+      comments = appComments;
+      console.log(comments);
+      renderComments();
+    });
+  });
+  renderComments();
+};
+
+// const editButtonTouch = () =>{
+
+//   const editButtons = document.querySelectorAll(".edit-button");
+//   for(editButton of editButtons){
+
+//     editButton.addEventListener("click", () =>{
+//       const index = editButton.dataset.index;
+//       if(comments[index].isEdit === false){
+//         comments[index].isEdit = true;
+
+//       }else{
+//         comments[index].isEdit = false;
+//       }
+//     });
+
+//   }
+// };
 
 
 const renderComments = () => {
@@ -68,25 +167,30 @@ const renderComments = () => {
       <div>${comment.date} </div>
     </div>
     <div class="comment-body">
-      <div class="comment-text"data-index = "${index}">
+    ${comment.isEdit
+        ? `<textarea class="area-text">${comment.text}</textarea>`
+        : `<div class="comment-text"data-index = "${index}">`}
         ${comment.text} 
       </div>
     </div>
     <div class="comment-footer">
       <div class="likes">
+      <button class = "edit-button" data-index ="${index}">Редактировать</button>
         <span class="likes-counter">${comment.likeCount}</span>
         <button data-index="${index}" class="${comment.liked ? 'like-button -active-like' : 'like-button'}"></button>
+        
       </div>
     </div>
   </li>`
   })
     .join('');
-  listElement.innerHTML = commentsHtml;
+  listElement.innerHTML = commentsHtml
   ButtonTouch();
   initTouchComment();
+
 };
 renderComments();
-
+const addComment = () =>{
 buttonElement.addEventListener("click", () => {
   nameElement.classList.remove("error");
   commentsElement.classList.remove("error");
@@ -99,17 +203,39 @@ buttonElement.addEventListener("click", () => {
     commentsElement.classList.add("error");
     return;
   }
-  comments.push({
-    name: nameElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
-    date: `${myDate}`,
-    text: commentsElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
-    likeCount: 0,
-    liked: false
-  });
-  renderComments();
-  
-  nameElement.value = '';
-  commentsElement.value = '';
-  
-});
+  // Передаем комментарий
+  fetch("https://webdev-hw-api.vercel.app/api/v1/timur-ramazanov/comments", {
+    method: "POST",
+    body: JSON.stringify({
+      name: nameElement.value,
+      date: myDate,
+      text: commentsElement.value,
+      likeCount: 0,
+      liked: false,
+    })
+  }).then((response) => {
+    const jsonPromise = response.json();
+    jsonPromise.then((responseData) => {
+      comments = responseData;
+    });
+    nameElement.value = '';
+    commentsElement.value = '';
+    repeatedGet();
 
+  });
+
+});
+};
+addComment();
+renderComments();
+
+validateBlock();
+buttonBlock();
+mainForm.addEventListener("keyup", (e) => {
+  if (e.code === 'Enter') {
+    buttonElement.click();
+    nameElement.value = '';
+    commentsElement.value = '';
+  }
+});
+renderComments();
