@@ -11,9 +11,17 @@
 
 <body>
   <div class="container">
-    <ul class="comments" id="list"data>
-     
+    <ul class="comments" id="list" data>
+<!-- Рендеринг в JS -->
     </ul>
+    <section id="loaderComments" class="loader -display-none">
+      <h4 class="loader-text" id="loaderText">Комментарии загружаются...</h4>
+      <div class="loader__gif">
+        <img src="./img/Spinner-1s-100px.svg" alt="loader">
+      </div>
+    </section>
+
+    </section>
     <div class="add-form">
       <input id="name-input" type="text" class="add-form-name" placeholder="Введите ваше имя" />
       <textarea id="comments-input" type="textarea" class="add-form-text" placeholder="Введите ваш коментарий"
@@ -23,6 +31,7 @@
         <button class="add-form-button" id="add-button">Написать</button>
       </div>
     </div>
+  </div>
   </div>
   <script src="script.js"></script>
 </body>
