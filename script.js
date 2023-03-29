@@ -13,9 +13,13 @@ const fetchGetAndRenderComments = () => {
   return fetch("https://webdev-hw-api.vercel.app/api/v1/timur-ramazanov/comments", {
     method: "GET"
   }).then((response) => {
-    return response.json();
+    if(response.status === 200){
+      return response.json();
+    }else {
+      throw new Error("Что то пошло не так")
+    }
   }).then((responseData) => {
-    const options = {
+        const options = {
       year: '2-digit',
       month: 'numeric',
       day: 'numeric',
@@ -35,7 +39,10 @@ const fetchGetAndRenderComments = () => {
     comments = appComments;
     loaderCommentsElement.classList.add('-display-none')
     renderComments();
-  });
+  }).catch((error) => {
+alert('Проверьте подключение к интернету');
+console.warn(error);
+  })
 }
 let comments = [];
 
