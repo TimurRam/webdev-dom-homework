@@ -13,9 +13,13 @@ const fetchGetAndRenderComments = () => {
   return fetch("https://webdev-hw-api.vercel.app/api/v1/timur-ramazanov/comments", {
     method: "GET"
   }).then((response) => {
-    return response.json();
+    if(response.status === 200){
+      return response.json();
+    }else {
+      throw new Error("Что то пошло не так")
+    }
   }).then((responseData) => {
-    const options = {
+        const options = {
       year: '2-digit',
       month: 'numeric',
       day: 'numeric',
@@ -35,7 +39,10 @@ const fetchGetAndRenderComments = () => {
     comments = appComments;
     loaderCommentsElement.classList.add('-display-none')
     renderComments();
-  });
+  }).catch((error) => {
+alert('Проверьте подключение к интернету');
+console.warn(error);
+  })
 }
 let comments = [];
 
@@ -112,6 +119,58 @@ const buttonDelete = () => {
 };
 buttonDelete();
 
+// Повторный POST запрос при ошибке 500
+function repeatedRequestComment() {
+  mainForm.classList.add('-display-none');
+  loaderCommentsElement.classList.remove('-display-none');
+  // Передаем комментарий
+  fetch("https://webdev-hw-api.vercel.app/api/v1/timur-ramazanov/comments", {
+      method: "POST",
+      body: JSON.stringify({
+        name: nameElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+        date: new Date,
+        text: commentsElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+        likeCount: 0,
+        liked: false,
+        forceError: true,
+      })
+    }).then((response) => {
+      if (response.status === 201) {
+        return response.json();
+      } else if (response.status === 400) {
+        throw new Error("Слишком коротко")
+      } else {
+        throw new Error("Сервер сломался")
+      }
+    }).then((responseData) => {
+      comments = responseData;
+    }).then(() => {
+      return fetchGetAndRenderComments();
+
+    }).then((data) => {
+      mainForm.classList.remove('-display-none');
+      loaderCommentsElement.classList.add('-display-none');
+
+      nameElement.value = '';
+      commentsElement.value = '';
+    }).catch((error) => {
+      if (error.message === 'Слишком коротко') {
+        alert("name и text должены содержать хотя бы 3 символа");
+        mainForm.classList.remove('-display-none');
+        loaderCommentsElement.classList.add('-display-none');
+        
+      }if(error.message === 'Сервер сломался'){
+        repeatedRequestComment();
+        console.warn(error);
+      }
+        
+
+      });
+      renderComments();
+    };
+  
+
+
 const addComments = () => {
   buttonElement.addEventListener("click", () => {
 
@@ -141,9 +200,16 @@ const addComments = () => {
         text: commentsElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
         likeCount: 0,
         liked: false,
+        forceError: true,
       })
     }).then((response) => {
-      return response.json();
+      if (response.status === 201) {
+        return response.json();
+      } else if (response.status === 400) {
+        throw new Error("Слишком коротко")
+      } else {
+        throw new Error("Сервер сломался")
+      }
     }).then((responseData) => {
       comments = responseData;
     }).then(() => {
@@ -155,10 +221,23 @@ const addComments = () => {
 
       nameElement.value = '';
       commentsElement.value = '';
+    }).catch((error) => {
+      if (error.message === 'Слишком коротко') {
+        alert("name и text должены содержать хотя бы 3 символа");
+        mainForm.classList.remove('-display-none');
+        loaderCommentsElement.classList.add('-display-none');
+        
+      }if(error.message === 'Сервер сломался'){
+        repeatedRequestComment();
+        console.warn(error);
+      }
+        
+
+      });
       renderComments();
     })
-  });
-}
+  };
+
 
 
 
@@ -220,8 +299,7 @@ renderComments();
 mainForm.addEventListener("keyup", (e) => {
   if (e.code === 'Enter' || e.code === 'NumpadEnter') {
     buttonElement.click();
-    nameElement.value = '';
-    commentsElement.value = '';
+
   }
 });
 
