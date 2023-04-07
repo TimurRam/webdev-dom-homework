@@ -22,7 +22,8 @@ body {
   }
 
   .comment,
-  .add-form {
+  .add-form,
+  .add-form-authorization {
     width: 596px;
     box-sizing: border-box;
     background: radial-gradient(
@@ -112,20 +113,38 @@ body {
     display: flex;
     flex-direction: column;
   }
+  .add-form-authorization{
+    padding: 20px;
+    margin-top: 48px;
+    display: flex;
+    flex-direction: column;
+  }
 
   .add-form-name,
-  .add-form-text {
+  .add-form-text,
+  .add-form-login,
+  .add-form-password {
     font-size: 16px;
     font-family: Helvetica;
     border-radius: 8px;
     border: none;
   }
-
+  .add-form-password,
+  .add-form-login, 
   .add-form-name {
     width: 300px;
     padding: 11px 22px;
   }
+.add-form-password{
+  margin-top: 12px;
 
+}
+.form-text{
+  font-size: 32px;
+  margin-top: 12px;
+  margin-bottom: 40px;
+  display: flex;
+}
   .add-form-text {
     margin-top: 12px;
     padding: 22px;
