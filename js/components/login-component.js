@@ -1,8 +1,8 @@
 import { userLogin, userRegistration } from "../userApi.js";
 
 
-
-export function renderLoginComponent({appEl, setToken, renderApp}  ) {
+export function renderLoginComponent({appEl, setToken, renderApp} ) {
+    
 
     const appHtml = `  
     <!-- Форма входа  -->

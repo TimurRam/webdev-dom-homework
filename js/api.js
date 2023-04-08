@@ -11,7 +11,7 @@ export function getComments() {
     })
 } 
 
-export function deleteComments ({token, id}) {
+export function deleteComments (token, id) {
     return fetch("https://webdev-hw-api.vercel.app/api/v2/timur-ramazanov/comments/" + id, {
         method: "DELETE",
         headers: {
@@ -22,7 +22,7 @@ export function deleteComments ({token, id}) {
       })
 }
 
-export function postComments ({token, name, text}){
+export function postComments (token, name, text){
     return fetch("https://webdev-hw-api.vercel.app/api/v2/timur-ramazanov/comments", {
         method: "POST",
         body: JSON.stringify({
@@ -47,7 +47,7 @@ export function postComments ({token, name, text}){
       })
 }
 
-export function repeatPostApp ({token, text, name}){
+export function repeatPostApp (token, text, name){
     fetch("https://webdev-hw-api.vercel.app/api/v2/timur-ramazanov/comments", {
         method: "POST",
         body: JSON.stringify({

@@ -7,7 +7,7 @@ const nameElement = document.getElementById("name-input");
 // const commentsElement = document.getElementById("comments-input");
 // const listElement = document.getElementById("list");
 const commentListElement = document.getElementById("comment-list");
-// const mainForm = document.querySelector(".add-form");
+export const mainForm = document.querySelector(".add-form");
 // const loaderText = document.getElementById("loaderText");
 // const loaderCommentsElement = document.getElementById("loaderComments");
 // console.log(loaderCommentsElement);
@@ -228,7 +228,7 @@ function addComments() {
 
 function renderApp() {
   const appEl = document.getElementById("app");
-
+const commentsEl = document.getElementById("list");
 if (!token) {
     
   renderLoginComponent({
@@ -240,10 +240,10 @@ if (!token) {
   
 });
 
-  return;
+  // return;
 }
 
-  const commentsHtml = comments.map((comment, index,) => {
+   commentsEl.innerHTML = comments.map((comment, index,) => {
     return `<li class="comment" id = "comment-list" data-index="${index}">
     <div class="comment-header">
       <div data-index="${index}">${comment.name}</div>
@@ -266,28 +266,12 @@ if (!token) {
   </li>`
   })
     .join('');
-  const appHtml = `  
+ 
   
-    <ul class="comments" id="list" data> 
-     ${commentsHtml}
-    </ul>
-    <section id="loaderComments" class="loader -display-none">
-      <h4 class="loader-text" id="loaderText">Комментарии загружаются...</h4>
-      <div class="loader__gif">
-        <img src="./img/Spinner-1s-100px.svg" alt="loader">
-      </div>
-    </section>
-    <div class="add-form">
-      <input id="name-input" type="text" class="add-form-name" placeholder="Введите ваше имя" />
-      <textarea id="comments-input" type="textarea" class="add-form-text" placeholder="Введите ваш коментарий"
-        rows="4"></textarea>
-      <div class="add-form-row">
-        <button class="add-form-button" id="add-button">Написать</button>
-      </div>
-    </div>  
-  </div> 
-  `
-  appEl.innerHTML = appHtml;
+    
+  
+  
+  
   
 
 
@@ -296,7 +280,4 @@ if (!token) {
   buttonDelete();
   addComments();
 };
-
-
-
 
