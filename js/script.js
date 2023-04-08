@@ -1,32 +1,27 @@
+import { deleteComments, getComments, postComments, repeatPostApp } from "./api.js";
+import { renderLoginComponent } from "./components/login-component.js";
 
-
-const likeButtons = document.querySelectorAll(".like-button");
+// const likeButtons = document.querySelectorAll(".like-button");
 const buttonElement = document.getElementById("add-button");
 const nameElement = document.getElementById("name-input");
-const commentsElement = document.getElementById("comments-input");
-const listElement = document.getElementById("list");
+// const commentsElement = document.getElementById("comments-input");
+// const listElement = document.getElementById("list");
 const commentListElement = document.getElementById("comment-list");
-const mainForm = document.querySelector(".add-form");
-const loaderText = document.getElementById("loaderText");
-const loaderCommentsElement = document.getElementById("loaderComments");
-let token = "Bearer cwboc4d0co6gckd8b8cocwdg6g39k3c03cg3d83cw3k39c3b43cg3b43bw3b43ck3co3bc"
-buttonElement.disabled = true;
+// const mainForm = document.querySelector(".add-form");
+// const loaderText = document.getElementById("loaderText");
+// const loaderCommentsElement = document.getElementById("loaderComments");
+// console.log(loaderCommentsElement);
+let token = "Bearer cwboc4d0co6gckd8b8cocwdg6g39k3c03cg3d83cw3k39c3b43cg3b43bw3b43ck3co3bc";
+let comments = [];
+
+fetchGetAndRenderComments();
+token = null;
 
 // GET запрос 
-const fetchGetAndRenderComments = () => {
-  return fetch("https://webdev-hw-api.vercel.app/api/v2/timur-ramazanov/comments", {
-    method: "GET",
-    headers: {
-      Authorization: token,
-    },
-  }).then((response) => {
-    if (response.status === 200) {
-      return response.json();
-    } else {
-      throw new Error("Что то пошло не так")
-    }
-  }).then((responseData) => {
-    const options = {
+export function fetchGetAndRenderComments() {
+  return getComments()
+  .then((responseData) => {
+      const options = {
       year: '2-digit',
       month: 'numeric',
       day: 'numeric',
@@ -36,6 +31,7 @@ const fetchGetAndRenderComments = () => {
     };
     const appComments = responseData.comments.map((comment) => {
       return {
+        id: comment.id,
         name: comment.author.name,
         date: new Date(comment.date).toLocaleDateString("ru-RU", options).replace(',', ' '),
         text: comment.text,
@@ -44,31 +40,19 @@ const fetchGetAndRenderComments = () => {
       };
     });
     comments = appComments;
-    loaderCommentsElement.classList.add('-display-none')
-    renderComments();
-  }).catch((error) => {
-    alert('Проверьте подключение к интернету');
-    console.warn(error);
-  })
-}
-let comments = [];
-
-
-
-// Выключение кнопки написать
-const buttonBlock = () => {
-  document.querySelectorAll("#name-input,#comments-input").forEach(element => {
-    element.addEventListener('input', () => {
-      if (nameElement.value === '' || commentsElement.value === '') {
-        buttonElement.disabled = true;
-      } else {
-        buttonElement.disabled = false;
-      }
-    });
+    // loaderCommentsElement.classList.add('-display-none');
+    renderApp();
+    // }).catch((error) => {
+    //   alert('Проверьте подключение к интернету');
+    //   console.warn(error);
+    // })
   });
 }
+
+
+
 // // Кнопка лайка
-const ButtonTouch = () => {
+function ButtonTouch() {
   const likeButtons = document.querySelectorAll(".like-button");
   for (const likeButton of likeButtons) {
     likeButton.addEventListener("click", () => {
@@ -83,7 +67,7 @@ const ButtonTouch = () => {
         comments[index].likeCount -= 1;
       }
       delay(2000).then(() => {
-        renderComments();
+        renderApp();
 
       })
     })
@@ -97,53 +81,47 @@ function delay(interval = 300) {
   });
 }
 // Цитирует выбранный комментарий
-const initTouchComment = () => {
-  const touchComments = listElement.querySelectorAll(".comment-text");
+function initTouchComment() {
+  const touchComments = document.querySelectorAll(".comment-text");
+  const commentsElement = document.getElementById("comments-input");
+
   for (const comment of touchComments) {
     comment.addEventListener("click", () => {
       const index = comment.dataset.index;
-      commentsElement.value = `>${comments[index].text}<\n>${comments[index].name}<,\n`
-      renderComments();
+      commentsElement.value = `${comments[index].text}<\n>${comments[index].name}<\n`;
+
     });
   }
 }
 
 // Удаление последнего комментария
-const buttonDelete = () => {
-  const buttonDeleteElement = document.getElementById("add-button-delete");
-  buttonDeleteElement.addEventListener('click', () => {
-    comments.pop();
-    renderComments();
-  });
-};
-buttonDelete();
+function buttonDelete() {
+  const buttonDeleteElements = document.querySelectorAll(".delete-button");
+  for (const deleteButton of buttonDeleteElements) {
+    const id = deleteButton.dataset.id
+    deleteButton.addEventListener('click', () => {
+      deleteButton.textContent = 'Удаляется...'
+      return deleteComments({token, id}).then((responseData) => {
+        comments = responseData;
+      }).then(() => {
+        fetchGetAndRenderComments();
+      })
+    })
+  }
+}
+
+
+
+
 
 // Повторный POST запрос при ошибке 500
 function repeatedRequestComment() {
   mainForm.classList.add('-display-none');
   loaderCommentsElement.classList.remove('-display-none');
   // Передаем комментарий
-  fetch("https://webdev-hw-api.vercel.app/api/v2/timur-ramazanov/comments", {
-    method: "POST",
-    body: JSON.stringify({
-      name: nameElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
-      date: new Date,
-      text: commentsElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
-      likeCount: 0,
-      liked: false,
-      forceError: true,
-    }),
-    headers: {
-      Authorization: token,
-    },
-  }).then((response) => {
-    if (response.status === 201) {
-      return response.json();
-    } else if (response.status === 400) {
-      throw new Error("Слишком коротко")
-    } else {
-      throw new Error("Сервер сломался")
-    }
+  return repeatPostApp({
+    token,
+    text:commentsElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
   }).then((responseData) => {
     comments = responseData;
   }).then(() => {
@@ -169,16 +147,38 @@ function repeatedRequestComment() {
 
 
   });
-  renderComments();
+  
 };
 
 
 
-const addComments = () => {
-  buttonElement.addEventListener("click", () => {
+function addComments() {
+  const buttonElement = document.getElementById("add-button");
+  const nameElement = document.getElementById("name-input");
+  const commentsElement = document.getElementById("comments-input");
+  const mainForm = document.querySelector(".add-form");
+  const loaderCommentsElement = document.getElementById("loaderComments");
+  buttonElement.disabled = true;
 
-    nameElement.classList.remove("error");
-    commentsElement.classList.remove("error");
+  
+  document.querySelectorAll("#name-input,#comments-input").forEach(element => {
+
+    element.addEventListener('input', () => {
+      if (nameElement.value === '' || commentsElement.value === '') {
+        buttonElement.disabled = true;
+      } else {
+        buttonElement.disabled = false;
+      }
+    });
+  });
+
+
+  mainForm.addEventListener("keyup", (e) => {
+    if (e.code === 'Enter' || e.code === 'NumpadEnter') {
+      buttonElement.click();
+    }
+  });
+  buttonElement.addEventListener("click", () => {
 
     nameElement.classList.remove("error");
     commentsElement.classList.remove("error");
@@ -195,33 +195,15 @@ const addComments = () => {
     loaderCommentsElement.classList.remove('-display-none');
 
     // Передаем комментарий
-    fetch("https://webdev-hw-api.vercel.app/api/v2/timur-ramazanov/comments", {
-      method: "POST",
-      body: JSON.stringify({
-        name: nameElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
-        date: new Date,
-        text: commentsElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
-        likeCount: 0,
-        liked: false,
-        forceError: true,
-      }),
-      headers: {
-        Authorization: token,
-      },
-    }).then((response) => {
-      if (response.status === 201) {
-        return response.json();
-      } else if (response.status === 400) {
-        throw new Error("Слишком коротко")
-      } else {
-        throw new Error("Сервер сломался")
-      }
+   return postComments({
+    token,
+     text: commentsElement.value.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
     }).then((responseData) => {
       comments = responseData;
     }).then(() => {
       return fetchGetAndRenderComments();
 
-    }).then((data) => {
+    }).then(() => {
       mainForm.classList.remove('-display-none');
       loaderCommentsElement.classList.add('-display-none');
 
@@ -241,13 +223,27 @@ const addComments = () => {
 
 
     });
-    renderComments();
   })
 };
 
-const renderComments = (buttonDelete) => {
+function renderApp() {
   const appEl = document.getElementById("app");
-  const commentsHtml = comments.map((comment, index) => {
+
+if (!token) {
+    
+  renderLoginComponent({
+    appEl, 
+    setToken: (newToken) => {
+    token = newToken;
+  },
+  renderApp,
+  
+});
+
+  return;
+}
+
+  const commentsHtml = comments.map((comment, index,) => {
     return `<li class="comment" id = "comment-list" data-index="${index}">
     <div class="comment-header">
       <div data-index="${index}">${comment.name}</div>
@@ -261,8 +257,9 @@ const renderComments = (buttonDelete) => {
     </div>
     <div class="comment-footer">
       <div class="likes">
+      <button id="delete-button" class = "delete-button" data-id ="${comment.id}">Удалить</button>
         <span class="likes-counter">${comment.likeCount}</span>
-        <button data-index="${index}" class="${comment.liked ? 'like-button -loading-like -active-like' : 'like-button'}"></button>
+        <button data-index="${comment.id}" class="${comment.liked ? 'like-button -loading-like -active-like' : 'like-button'}"></button>
         
       </div>
     </div>
@@ -270,20 +267,36 @@ const renderComments = (buttonDelete) => {
   })
     .join('');
   const appHtml = `  
-   <ul class="comments" id="list" data>
-<!-- Рендеринг в JS -->
-${commentsHtml}
- </ul> `
+  
+    <ul class="comments" id="list" data> 
+     ${commentsHtml}
+    </ul>
+    <section id="loaderComments" class="loader -display-none">
+      <h4 class="loader-text" id="loaderText">Комментарии загружаются...</h4>
+      <div class="loader__gif">
+        <img src="./img/Spinner-1s-100px.svg" alt="loader">
+      </div>
+    </section>
+    <div class="add-form">
+      <input id="name-input" type="text" class="add-form-name" placeholder="Введите ваше имя" />
+      <textarea id="comments-input" type="textarea" class="add-form-text" placeholder="Введите ваш коментарий"
+        rows="4"></textarea>
+      <div class="add-form-row">
+        <button class="add-form-button" id="add-button">Написать</button>
+      </div>
+    </div>  
+  </div> 
+  `
   appEl.innerHTML = appHtml;
-  const buttonDeleteElement = document.getElementById("add-button-delete");
+  
 
 
+  ButtonTouch();
+  initTouchComment();
+  buttonDelete();
+  addComments();
 };
-fetchGetAndRenderComments();
 
-mainForm.addEventListener("keyup", (e) => {
-  if (e.code === 'Enter' || e.code === 'NumpadEnter') {
-    buttonElement.click();
 
-  }
-});
+
+
