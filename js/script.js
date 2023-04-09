@@ -5,24 +5,33 @@ import {
   repeatPostApp
 } from './api.js'
 import { renderLoginComponent } from './components/login-component.js'
+import { userLogin } from './userApi.js'
 
 // const likeButtons = document.querySelectorAll(".like-button");
 const buttonElement = document.getElementById('add-button')
 const nameElement = document.getElementById('name-input')
-// const commentsElement = document.getElementById("comments-input");
-// const listElement = document.getElementById("list");
-const commentListElement = document.getElementById('comment-list')
-export const mainForm = document.querySelector('.add-form')
-// const loaderText = document.getElementById("loaderText");
-// const loaderCommentsElement = document.getElementById("loaderComments");
-// console.log(loaderCommentsElement);
-let token = '';
-let comments = [];
+// const commentListElement = document.getElementById('comment-list')
+const mainForm = document.querySelector('.add-form')
+let token = ''
+let comments = []
+let myStorage = window.localStorage
+console.log(myStorage);
 
 fetchGetAndRenderComments()
-let userName = "";
-console.log(userName);
-
+let userName = localStorage.getItem("name");
+function storage () {
+  if (myStorage.length > 0) {
+    userLogin(
+      localStorage.getItem('login'),
+      localStorage.getItem('password')
+    ).then(response => {
+      token = `Bearer ${response.user.token}`
+      console.log(token)
+      renderApp()
+    })
+  }
+}
+storage()
 // GET запрос
 export function fetchGetAndRenderComments () {
   return getComments().then(responseData => {
@@ -47,13 +56,8 @@ export function fetchGetAndRenderComments () {
       }
     })
     comments = appComments
-
-    // loaderCommentsElement.classList.add('-display-none');
     renderApp()
-    // }).catch((error) => {
-    //   alert('Проверьте подключение к интернету');
-    //   console.warn(error);
-    // })
+    storage()
   })
 }
 
@@ -161,7 +165,7 @@ function addComments () {
 
   document.querySelectorAll('#name-input,#comments-input').forEach(element => {
     element.addEventListener('input', () => {
-      if ( commentsElement.value === '') {
+      if (commentsElement.value === '') {
         buttonElement.disabled = true
       } else {
         buttonElement.disabled = false
@@ -175,9 +179,9 @@ function addComments () {
     }
   })
   buttonElement.addEventListener('click', () => {
-      commentsElement.classList.remove('error')
+    commentsElement.classList.remove('error')
 
-     if (commentsElement.value === '') {
+    if (commentsElement.value === '') {
       commentsElement.classList.add('error')
       return
     }
@@ -207,7 +211,7 @@ function addComments () {
       })
       .catch(error => {
         if (error.message === 'Слишком коротко') {
-          alert('name и text должены содержать хотя бы 3 символа')
+          alert('text должены содержать не менее 3-х символов')
           mainForm.classList.remove('-display-none')
           loaderCommentsElement.classList.add('-display-none')
         } else if (error.message === 'Сервер сломался') {
@@ -228,10 +232,10 @@ function renderApp () {
       setToken: newToken => {
         token = newToken
       },
-      setUserName: newName =>{
+      setUserName: newName => {
         userName = newName
       },
-      
+
       renderApp
     })
 
@@ -287,17 +291,16 @@ function renderApp () {
        <button id="exit" class = "exit-button">Выйти</button>
       </div>
     </div>`
-  appEl.innerHTML = appHtml
-  document.getElementById('name-input').setAttribute('disabled', 'disabled');
- 
 
-   document.getElementById('exit').addEventListener('click', ()=>{
-    token = !token;
-    
+  appEl.innerHTML = appHtml
+  document.getElementById('name-input').setAttribute('disabled', 'disabled')
+
+  document.getElementById('exit').addEventListener('click', () => {
+    token = !token
+    localStorage.clear()
+
     renderApp()
-  });
-  
-// console.log(userName);
+  })
   ButtonTouch()
   initTouchComment()
   buttonDelete()

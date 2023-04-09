@@ -84,8 +84,12 @@ export function renderLoginComponent ({ appEl, setToken, renderApp, comments, se
         }
         userLogin(login, password)
           .then(user => {
+            console.log(user);
             setToken(`Bearer ${user.user.token}`)
             setUserName(`${user.user.name}`)
+            localStorage.setItem("login",login);
+            localStorage.setItem("password",password);
+            localStorage.setItem("name",user.user.name);
             renderApp()
           })
           .catch(error => {
