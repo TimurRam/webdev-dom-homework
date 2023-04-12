@@ -6,7 +6,6 @@ export function userLogin (login, password) {
       password: password
     })
   }).then(response => {
-    console.log(response);
     switch (response.status) {
       case 400:
         throw new Error('Не верный логин или пароль')

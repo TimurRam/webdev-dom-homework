@@ -3,21 +3,22 @@ import {
   getComments,
   postComments,
   repeatPostApp
-} from './api.js'
-import { renderLoginComponent } from './components/login-component.js'
-import { userLogin } from './userApi.js'
+} from './api.js';
+import { renderLoginComponent } from './components/login-component.js';
+import { userLogin } from './userApi.js';
+import { format } from 'date-fns';
 
-// const likeButtons = document.querySelectorAll(".like-button");
+
+
 const buttonElement = document.getElementById('add-button')
 const nameElement = document.getElementById('name-input')
-// const commentListElement = document.getElementById('comment-list')
 const mainForm = document.querySelector('.add-form')
-let token = ''
-let comments = []
-let myStorage = window.localStorage
-console.log(myStorage);
+let token = '';
+let comments = [];
+let myStorage = window.localStorage;
 
-fetchGetAndRenderComments()
+
+fetchGetAndRenderComments();
 let userName = localStorage.getItem("name");
 function storage () {
   if (myStorage.length > 0) {
@@ -26,30 +27,19 @@ function storage () {
       localStorage.getItem('password')
     ).then(response => {
       token = `Bearer ${response.user.token}`
-      console.log(token)
-      renderApp()
+      renderApp();
     })
   }
 }
 storage()
 // GET запрос
 export function fetchGetAndRenderComments () {
-  return getComments().then(responseData => {
-    const options = {
-      year: '2-digit',
-      month: 'numeric',
-      day: 'numeric',
-      timezone: 'UTC',
-      hour: 'numeric',
-      minute: '2-digit'
-    }
-    const appComments = responseData.comments.map(comment => {
+   return getComments().then(responseData => {
+      const appComments = responseData.comments.map(comment => {
       return {
         id: comment.id,
         name: comment.author.name,
-        date: new Date(comment.date)
-          .toLocaleDateString('ru-RU', options)
-          .replace(',', ' '),
+        date: format(new Date(comment.date),'yyyy-MM-dd hh.mm.ss'),
         text: comment.text,
         likeCount: comment.likes,
         liked: false
@@ -76,7 +66,7 @@ function ButtonTouch () {
         comments[index].likeCount -= 1
       }
       delay(2000).then(() => {
-        renderApp()
+        renderApp();
       })
     })
   }
@@ -161,7 +151,7 @@ function addComments () {
   const commentsElement = document.getElementById('comments-input')
   const mainForm = document.querySelector('.add-form')
   const loaderCommentsElement = document.getElementById('loaderComments')
-  buttonElement.disabled = true
+  buttonElement.disabled = true;
 
   document.querySelectorAll('#name-input,#comments-input').forEach(element => {
     element.addEventListener('input', () => {
